@@ -1,7 +1,9 @@
 package handler
 
 import (
+	persistentlayer "MyStorage/ persistentlayer"
 	"MyStorage/meta"
+	"MyStorage/model"
 	"MyStorage/util"
 	"encoding/json"
 	"fmt"
@@ -32,10 +34,9 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 		defer file.Close()
 		fileMeta := meta.FileMeta{
 			FileName: head.Filename,
-			Location: "/tmp/" + head.Filename, //文件存放的位置
-			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
+			Location: "/tmp/" + head.Filename,                  //文件存放的位置
+			UploadAt: time.Now().Format("2006-01-02 15:04:05"), //创建时间
 		}
-
 		//创建新的一个文件
 		newFile, err := os.Create(fileMeta.Location)
 		if err != nil {
@@ -54,9 +55,21 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 		newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
 		//计算sha1值
 		fileMeta.FileShl = util.FileSha1(newFile)
-		//更新文件
-		meta.UpdateFileMeta(&fileMeta)
-		http.Redirect(writer, request, "/file/upload/suc", http.StatusFound)
+
+		var fileData = &model.TblFile{
+			FileName: fileMeta.FileName,
+			FileSha1: fileMeta.FileShl,
+			FileAddr: fileMeta.Location,
+			FileSize: fileMeta.FileSize,
+		}
+		fileData.CreateAt.Time = time.Now()
+
+		if ok := persistentlayer.OnFileUploadFinished(fileData); ok {
+			//更新文件
+			meta.UpdateFileMeta(&fileMeta)
+			http.Redirect(writer, request, "/file/upload/suc", http.StatusFound)
+		}
+
 	}
 }
 
@@ -69,8 +82,9 @@ func UploadSucHandler(writer http.ResponseWriter, request *http.Request) {
 func GetFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	fileHash := request.Form["filehash"][0]
-	fileMeta := meta.GetFileMeta(fileHash)
-	data, err := json.Marshal(fileMeta)
+	tblFile := persistentlayer.GetFileData(fileHash)
+	//fileMeta := meta.GetFileMeta(fileHash)
+	data, err := json.Marshal(tblFile)
 	if err != nil {
 		return
 	}

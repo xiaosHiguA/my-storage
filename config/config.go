@@ -1,7 +1,7 @@
 package config
 
 type SqlConnDate struct {
-	DriverName string `json:"driver_name"`
+	DriverName string `json:"driverName"`
 	Host       string `json:"host"`
 	Port       string `json:"port"`
 	Database   string `json:"database"`

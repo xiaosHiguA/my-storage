@@ -1,7 +1,8 @@
 package handler
 
 import (
-	persistentlayer "MyStorage/ persistentlayer"
+	"MyStorage/persistentlayer"
+
 	"MyStorage/meta"
 	"MyStorage/model"
 	"MyStorage/util"
@@ -17,7 +18,7 @@ import (
 
 //UpFileLoaHandler 上传文件
 func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
-	//判断请求是什么请求
+	//判断请求是Get 请求 渲染 上传页面
 	if request.Method == "GET" {
 		data, err := ioutil.ReadFile("./static/view/index.html")
 		if err != nil {
@@ -25,18 +26,25 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		io.WriteString(writer, string(data))
-	} else if request.Method == "post" {
+	} else if request.Method == "POST" {
 		file, head, err := request.FormFile("file")
 		if err != nil {
 			fmt.Printf("file to get data ,err %s\n", err.Error())
 			return
 		}
 		defer file.Close()
+		// 在相对路径 创建 文件位置
+		if err := os.Mkdir("./fileData", os.ModeDir); err != nil {
+			fmt.Println("创建 文件存放位置 错误: ", err)
+			return
+		}
+		//
 		fileMeta := meta.FileMeta{
 			FileName: head.Filename,
 			Location: "/tmp/" + head.Filename,                  //文件存放的位置
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"), //创建时间
 		}
+
 		//创建新的一个文件
 		newFile, err := os.Create(fileMeta.Location)
 		if err != nil {
@@ -122,7 +130,6 @@ func RemoveListFileMetaHandler(writer http.ResponseWriter, request *http.Request
 //DownloadHandler 下载元文件
 func DownloadHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
-
 	fSha1 := request.Form.Get("filehash")
 	//根据文件的Key的获取文件
 	fm := meta.GetFileMeta(fSha1)
@@ -141,7 +148,6 @@ func DownloadHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "application/octect-stream")
 	writer.Header().Set("content-disposition", "attachment; filename=\""+fm.FileName+"\"")
 	writer.Write(data)
-
 }
 
 //UpFileMetaHandler 更新文件

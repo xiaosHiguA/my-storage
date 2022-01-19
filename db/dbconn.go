@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
+
+	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"net/url"
 	"os"
 )
 
@@ -13,14 +16,13 @@ var dbSql *gorm.DB
 
 func init() {
 	confData := getSqlConnConfig()
-	connString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true&loc=%s",
+	connString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=%s",
 		confData.Username,
 		confData.Password,
 		confData.Host,
 		confData.Port,
 		confData.Database,
-		confData,
-		confData.Loc)
+		url.QueryEscape(confData.Loc))
 	db, err := gorm.Open(confData.DriverName, connString)
 	if err != nil {
 		log.Println("连接mysql err: ", err)
@@ -30,9 +32,9 @@ func init() {
 }
 
 // 获取sql配置文件信息
-func getSqlConnConfig() config.SqlConnDate {
-	var conf = config.SqlConnDate{}
-	file, err := os.Open("./sql.json")
+func getSqlConnConfig() *config.SqlConnDate {
+	var conf = &config.SqlConnDate{}
+	file, err := os.Open("./db/my.json")
 	if err != nil {
 		log.Println("打开json文件出错: ", err)
 		return conf

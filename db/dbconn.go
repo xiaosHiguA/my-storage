@@ -4,11 +4,9 @@ import (
 	"MyStorage/config"
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/gorm"
-
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"log"
-	"net/url"
 	"os"
 )
 
@@ -16,14 +14,14 @@ var dbSql *gorm.DB
 
 func init() {
 	confData := getSqlConnConfig()
-	connString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=%s",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=%s",
 		confData.Username,
 		confData.Password,
 		confData.Host,
 		confData.Port,
 		confData.Database,
-		url.QueryEscape(confData.Loc))
-	db, err := gorm.Open(confData.DriverName, connString)
+		confData.Loc)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Println("连接mysql err: ", err)
 		return

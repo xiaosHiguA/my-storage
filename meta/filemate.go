@@ -1,6 +1,9 @@
 package meta
 
-import "sort"
+import (
+	"os"
+	"sort"
+)
 
 //FileMeta 源文件信息
 type FileMeta struct {
@@ -24,8 +27,8 @@ func UpdateFileMeta(fileMeta *FileMeta) {
 	fileMetas[fileMeta.FileName] = fileMeta
 }
 
-//GetFileMeta : 新增/更新文件源信息
-func GetFileMeta(fileSha1 string) *FileMeta {
+//SelectFileMeta : 查询文件是否在队列中
+func SelectFileMeta(fileSha1 string) *FileMeta {
 	if value, ok := fileMetas[fileSha1]; ok {
 		return value
 	}
@@ -58,6 +61,14 @@ func RemoveFileMetaList(sha1 string) bool {
 	return false
 }
 
-func Doc() {
+func PathExists(path string) string {
+	_, err := os.Stat(path)
+	if err != nil {
+		return ""
+	}
+	if os.IsNotExist(err) {
+		return ""
+	}
 
+	return "fileData"
 }

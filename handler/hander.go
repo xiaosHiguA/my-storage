@@ -4,8 +4,6 @@ import (
 	"MyStorage/persistentlayer"
 
 	"MyStorage/meta"
-	"MyStorage/model"
-	"MyStorage/util"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,25 +31,25 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		defer file.Close()
+
 		// 在相对路径 创建 文件位置
-		if err := os.Mkdir("./fileData", os.ModeDir); err != nil {
-			fmt.Println("创建 文件存放位置 错误: ", err)
-			return
-		}
+		_ = os.Mkdir("./fileData", os.ModePerm)
+		var fileMeta *meta.FileMeta
+		//为true 是文件不存在
 		//
-		fileMeta := meta.FileMeta{
+		fileMeta = &meta.FileMeta{
 			FileName: head.Filename,
-			Location: "/tmp/" + head.Filename,                  //文件存放的位置
+			Location: "./fileData" + head.Filename,             //文件存放的位置
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"), //创建时间
 		}
 
-		//创建新的一个文件
-		newFile, err := os.Create(fileMeta.Location)
+		//在本地创建新的一个文件
+		newFile, err := os.Create("./fileData" + fileMeta.Location)
 		if err != nil {
 			fmt.Printf("failed to create file err:%s\n", err.Error())
 			return
 		}
-
+		defer newFile.Close()
 		//完成文件拷贝
 		fileMeta.FileSize, err = io.Copy(newFile, file)
 		if err != nil {
@@ -59,29 +57,15 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		//Seek将下一次在文件上读取或写入的偏移量设置为偏移量
-		newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
-		//计算sha1值
-		fileMeta.FileShl = util.FileSha1(newFile)
-
-		var fileData = &model.TblFile{
-			FileName: fileMeta.FileName,
-			FileSha1: fileMeta.FileShl,
-			FileAddr: fileMeta.Location,
-			FileSize: fileMeta.FileSize,
-		}
-		fileData.CreateAt.Time = time.Now()
-
-		if ok := persistentlayer.OnFileUploadFinished(fileData); ok {
-			//更新文件
-			meta.UpdateFileMeta(&fileMeta)
-			http.Redirect(writer, request, "/file/upload/suc", http.StatusFound)
-		}
+		////Seek将下一次在文件上读取或写入的偏移量设置为偏移量
+		//newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
+		////计算sha1值
+		//fileMeta.FileShl = util.FileSha1(newFile)
 
 	}
 }
 
-//UploadSucHandler 上传文件
+//UploadSucHandler 上传文件 保存到数据库中
 func UploadSucHandler(writer http.ResponseWriter, request *http.Request) {
 	io.WriteString(writer, "Upload finished")
 }
@@ -119,7 +103,7 @@ func RemoveListFileMetaHandler(writer http.ResponseWriter, request *http.Request
 	request.ParseForm()
 	fileHash := request.Form.Get("filehash")
 	//查询队列是否存在该文件
-	fileData := meta.GetFileMeta(fileHash)
+	fileData := meta.SelectFileMeta(fileHash)
 	ok := meta.RemoveFileMetaList(fileData.FileShl)
 	if ok {
 		writer.WriteHeader(http.StatusOK)
@@ -132,7 +116,7 @@ func DownloadHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	fSha1 := request.Form.Get("filehash")
 	//根据文件的Key的获取文件
-	fm := meta.GetFileMeta(fSha1)
+	fm := meta.SelectFileMeta(fSha1)
 	f, err := os.Open(fm.Location)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
@@ -165,13 +149,14 @@ func UpFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	//查询 这个元文件是否存在缓存队列中
-	fileMeta := meta.GetFileMeta(fileHash1)
+	fileMeta := meta.SelectFileMeta(fileHash1)
 	//验证结构体的值不为空
 	if fileMeta == nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	fileMeta.FileName = fileName
+	//
 	meta.UpdateFileMeta(fileMeta)
 	fileData, err := json.Marshal(fileMeta)
 	if err != nil {

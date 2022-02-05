@@ -1,8 +1,11 @@
 package meta
 
 import (
+	"MyStorage/model"
+	"MyStorage/persistentlayer"
 	"os"
 	"sort"
+	"time"
 )
 
 //FileMeta 源文件信息
@@ -25,6 +28,15 @@ func init() {
 func UpdateFileMeta(fileMeta *FileMeta) {
 	//通过fileMeta.FileSha1作为key,每个文件为value
 	fileMetas[fileMeta.FileName] = fileMeta
+	var fileModer = &model.TblFile{
+		FileSha1: fileMeta.FileShl,
+		FileName: fileMeta.FileName,
+		FileSize: fileMeta.FileSize,
+		FileAddr: fileMeta.Location,
+	}
+	fileModer.CreateAt = time.Now()
+	fileModer.UpdateAt = time.Now()
+	persistentlayer.OnFileUploadFinished(fileModer)
 }
 
 //SelectFileMeta : 查询文件是否在队列中

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"MyStorage/persistentlayer"
+	"MyStorage/util"
 
 	"MyStorage/meta"
 	"encoding/json"
@@ -56,16 +57,15 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			fmt.Printf("file to save data into file ,err: %s\n", err.Error())
 			return
 		}
-
-		////Seek将下一次在文件上读取或写入的偏移量设置为偏移量
+		//Seek将下一次在文件上读取或写入的偏移量设置为偏移量
 		//newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
-		////计算sha1值
-		//fileMeta.FileShl = util.FileSha1(newFile)
-
+		//计算sha1值
+		fileMeta.FileShl = util.FileSha1(newFile)
+		meta.UpdateFileMeta(fileMeta)
 	}
 }
 
-//UploadSucHandler 上传文件 保存到数据库中
+//UploadSucHandler 上传文件 保存到
 func UploadSucHandler(writer http.ResponseWriter, request *http.Request) {
 	io.WriteString(writer, "Upload finished")
 }
@@ -74,8 +74,9 @@ func UploadSucHandler(writer http.ResponseWriter, request *http.Request) {
 func GetFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	fileHash := request.Form["filehash"][0]
+	//获取单条信息
 	tblFile := persistentlayer.GetFileData(fileHash)
-	//fileMeta := meta.GetFileMeta(fileHash)
+
 	data, err := json.Marshal(tblFile)
 	if err != nil {
 		return

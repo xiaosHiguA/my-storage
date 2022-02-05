@@ -8,7 +8,7 @@ import (
 
 func OnFileUploadFinished(file *model.TblFile) bool {
 	db := db.GetDb()
-	result := db.Create(file).Omit("ext_1", "ext_2")
+	result := db.Model(file).Create(file).Omit("ext_1", "ext_2")
 	if result.Error != nil {
 		log.Println("存储文件失败", result.Error.Error())
 		return false
@@ -16,12 +16,20 @@ func OnFileUploadFinished(file *model.TblFile) bool {
 	return true
 }
 
-// GetFileData 取文件信息
+// GetFileData 取单个文件信息
 func GetFileData(fileHash string) *model.TblFile {
-	var tblFile *model.TblFile
+	var tblFile = &model.TblFile{}
 	db := db.GetDb()
-	if rest := db.Find(tblFile, "file_sha_1= ?", fileHash); rest.Error != nil {
+	if rest := db.First(tblFile, "file_sha1=?", fileHash); rest.Error != nil {
+		log.Println("获取单个文件信息错误: ", rest.Error)
 		return nil
 	}
 	return tblFile
+}
+
+func GetArticleList() []*model.TblFile {
+	tab := make([]*model.TblFile, 0)
+	db := db.GetDb()
+	db.Where("")
+	return tab
 }

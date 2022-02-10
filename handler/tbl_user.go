@@ -7,7 +7,7 @@ import (
 )
 
 func SignupHandler(writer http.ResponseWriter, request *http.Request) {
-	var tblUser *model.TblUser
+	var tblUser = new(model.TblUser)
 	request.ParseForm()
 	tblUser.UserName = request.Form.Get("tbl_user")
 	tblUser.UserPwd = request.Form.Get("tbl_pass")
@@ -15,6 +15,7 @@ func SignupHandler(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte("lnvalid paramter"))
 		return
 	}
+	//查询用户是否存在
 	tblName := meta.GetTbUser(tblUser.UserName)
 	if tblName == meta.UserNAMENULL {
 		if ok := meta.CreateUser(tblUser); ok {

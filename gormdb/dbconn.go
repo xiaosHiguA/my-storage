@@ -1,4 +1,4 @@
-package db
+package gormdb
 
 import (
 	"MyStorage/config"
@@ -32,7 +32,7 @@ func init() {
 // 获取sql配置文件信息
 func getSqlConnConfig() *config.SqlConnDate {
 	var conf = &config.SqlConnDate{}
-	file, err := os.Open("./db/my.json")
+	file, err := os.Open("./gormdb/my.json")
 	if err != nil {
 		log.Println("打开json文件出错: ", err)
 		return conf

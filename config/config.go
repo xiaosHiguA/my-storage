@@ -1,5 +1,6 @@
 package config
 
+//SqlConnDate 数据库连接模型
 type SqlConnDate struct {
 	DriverName string `json:"driverName"`
 	Host       string `json:"host"`

@@ -2,6 +2,7 @@ package main
 
 import (
 	"MyStorage/handler"
+
 	"fmt"
 	"net/http"
 )
@@ -18,8 +19,13 @@ func main() {
 	http.HandleFunc("/file/downloadFile", handler.DownloadHandler)
 	http.HandleFunc("/file/upload/upFile", handler.UpFileMetaHandler)
 	http.HandleFunc("/file/delete", handler.RemoveListFileMetaHandler)
+
+	http.HandleFunc("/user/signup", handler.RegisterHandler)
+	http.HandleFunc("/user/login", handler.TblUserLoginHandle)
+	http.HandleFunc("/user/info", handler.UserInfoHandler)
 	err := http.ListenAndServe(":8083", nil)
 	if err != nil {
 		fmt.Printf("Failed to start server ,err: %s", err.Error())
 	}
+	fmt.Println("启动监听：...")
 }

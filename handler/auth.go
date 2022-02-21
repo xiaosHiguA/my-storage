@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"MyStorage/meta"
+	"MyStorage/util"
 	"net/http"
+	"time"
 )
 
 //HttpInterceptor http请求拦截器
@@ -13,10 +14,28 @@ func HttpInterceptor(h http.HandlerFunc) http.HandlerFunc {
 			username := r.Form.Get("username")
 			token := r.Form.Get("token")
 			//验证token
-			if len(username) < 3 || !meta.AnalysisToken(token) {
-				w.WriteHeader(http.StatusForbidden) //返回403
+			if len(username) < 3 || !IsTokenValid(token) {
+				resp := util.RespMsg{
+					Code: 500,
+					Msg:  "token 无效",
+					Data: nil,
+				}
+				w.Write(resp.JsonByte())
 				return
 			}
 			h(w, r)
 		})
+}
+
+//IsTokenValid 验证token
+func IsTokenValid(token string) bool {
+	if len(token) != 40 {
+		return false
+	}
+	//验证token是否有效
+	tokenString := token[len(token)-8:]
+	if util.Hex2Dec(tokenString) < time.Now().Unix()-86400 {
+		return false
+	}
+	return true
 }

@@ -8,7 +8,6 @@ import (
 
 func OnFileUploadFinished(file *model.TblFile) bool {
 	db := gormdb.GetDb()
-
 	result := db.Model(file).Create(file).Omit("ext_1", "ext_2")
 	if result.Error != nil {
 		log.Println("存储文件失败", result.Error.Error())

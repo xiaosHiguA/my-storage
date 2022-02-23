@@ -10,7 +10,7 @@ import (
 //RegisterHandler  用户注册
 func RegisterHandler(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
-		http.Redirect(writer, request, "./static/view/signup.html", http.StatusFound)
+		http.Redirect(writer, request, "/static/view/signup.html", http.StatusFound)
 		return
 	}
 	var tblUser = new(model.TblUser)
@@ -34,7 +34,7 @@ func RegisterHandler(writer http.ResponseWriter, request *http.Request) {
 //TblUserLoginHandle : 用户登录
 func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
-		http.Redirect(writer, request, "./static/view/signin.html", http.StatusFound)
+		http.Redirect(writer, request, "/static/view/signin.html", http.StatusFound)
 	}
 	request.ParseForm()
 	userName := request.Form.Get("username")
@@ -61,23 +61,37 @@ func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 	}
 	//生成token
 	token := util.GenToken(tblUser.UserName)
-	var tblUserFile = model.TblUserFile{
+	var tblUserFile = model.TblUserToken{
 		UserName:  userName,
 		UserToken: token,
 	}
-	//保存用户token
-	if !meta.SaveToken(tblUserFile) {
-		resp := util.RespMsg{
-			Code: 500,
-			Msg:  "内部错误",
+	//查询token 表是否有此用户
+	userToken := meta.GetUserToken(userName)
+	if userToken.UserName == meta.UserNAMENULL {
+		if !meta.SaveToken(&tblUserFile) {
+			resp := util.RespMsg{
+				Code: 500,
+				Msg:  "密码错误",
+			}
+			writer.Write(resp.JsonByte())
+			return
 		}
-		writer.Write(resp.JsonByte())
-		return
+	} else {
+		//保存用户token
+		if !meta.UpdateToken(tblUserFile) {
+			resp := util.RespMsg{
+				Code: 500,
+				Msg:  "内部错误",
+			}
+			writer.Write(resp.JsonByte())
+			return
+		}
 	}
 	resp := util.RespMsg{
-		Code: 200,
-		Msg:  "登录成功",
-		Data: token,
+		Code:  200,
+		Msg:   "登录成功",
+		Token: token,
+		Data:  nil,
 	}
 	writer.Write(resp.JsonByte())
 }

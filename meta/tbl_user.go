@@ -47,9 +47,30 @@ func GetUser(u string) *model.TblUser {
 	return tblUser
 }
 
-func SaveToken(tblUserFile model.TblUserFile) bool {
+//UpdateToken 更新用户token
+func UpdateToken(tblUserFile model.TblUserToken) bool {
 	db := gormdb.GetDb()
-	if err := db.Create(&tblUserFile).Error; err != nil {
+	if err := db.Model(&tblUserFile).Where("user_name=?", tblUserFile.UserName).Update("user_token", tblUserFile.UserToken).Error; err != nil {
+		log.Println("UpdateToken user err: ", err)
+		return false
+	}
+	return true
+}
+
+func GetUserToken(userName string) *model.TblUserToken {
+	var userToken = model.TblUserToken{}
+	db := gormdb.GetDb()
+	if err := db.Where("user_name=?", userName).First(&userToken).Error; err != nil {
+		log.Println("get token err: ", err)
+		return nil
+	}
+	return &userToken
+}
+
+func SaveToken(tblUserFile *model.TblUserToken) bool {
+	db := gormdb.GetDb()
+	if err := db.Create(tblUserFile).Error; err != nil {
+		log.Println("SaveToken token err: ", err)
 		return false
 	}
 	return true

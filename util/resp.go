@@ -10,9 +10,10 @@ const (
 )
 
 type RespMsg struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Data interface{} `json:"data"`
+	Code  int         `json:"code"`
+	Token string      `json:"token"`
+	Msg   string      `json:"msg"`
+	Data  interface{} `json:"data"`
 }
 
 // JsonByte : 对象转json格式的二进制数组

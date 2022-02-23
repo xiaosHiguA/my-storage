@@ -65,8 +65,8 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-//UploadSucHandler 上传文件 保存到
-func UploadSucHandler(writer http.ResponseWriter, request *http.Request) {
+//UpLoadSucHandler 上传文件 保存到
+func UpLoadSucHandler(writer http.ResponseWriter, request *http.Request) {
 	io.WriteString(writer, "Upload finished")
 }
 

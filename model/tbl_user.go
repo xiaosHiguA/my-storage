@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+//TblUser 用户表
 type TblUser struct {
 	Id             int       `json:"id"`
 	UserName       string    `json:"user_name"`

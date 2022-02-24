@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"MyStorage/persistentlayer"
+	"MyStorage/model"
 	"MyStorage/util"
 
 	"MyStorage/meta"
@@ -61,7 +61,24 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 		//newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
 		//计算sha1值
 		fileMeta.FileShl = util.FileSha1(newFile)
+		//更新文件列表
 		meta.UpdateFileMeta(fileMeta)
+		request.ParseForm()
+		username := request.Form.Get("username")
+		var tblUserFile = &model.TblUserFile{
+			UserName:   username,
+			FileSha1:   fileMeta.FileShl,
+			FileName:   fileMeta.FileName,
+			FileSize:   fileMeta.FileSize,
+			UploadAt:   time.Now(),
+			LastUpdate: time.Now(),
+		}
+		if !meta.OnUserFileUploadFinished(tblUserFile) {
+			writer.Write([]byte("Upload Failed."))
+		} else {
+			http.Redirect(writer, request, "/static/view/home.html", http.StatusFound)
+		}
+
 	}
 }
 
@@ -75,7 +92,7 @@ func GetFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	fileHash := request.Form["filehash"][0]
 	//获取单条信息
-	tblFile := persistentlayer.GetFileData(fileHash)
+	tblFile := meta.GetFileData(fileHash)
 
 	data, err := json.Marshal(tblFile)
 	if err != nil {

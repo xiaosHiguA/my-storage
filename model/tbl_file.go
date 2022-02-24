@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// TblFile 文件存储
+// TblFile 文件存储表
 type TblFile struct {
 	FileSha1 string    `json:"file_sha_1" gorm:"column:"file_sha1"` //文件哈希后值
 	FileName string    `json:"file_name" gorm:"column:"file_name"`  //文件昵称

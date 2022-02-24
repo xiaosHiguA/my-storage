@@ -2,7 +2,7 @@ package meta
 
 import (
 	"MyStorage/model"
-	"MyStorage/persistentlayer"
+	"log"
 	"os"
 	"sort"
 	"time"
@@ -17,14 +17,14 @@ type FileMeta struct {
 	UploadAt string // 更新信息
 }
 
-//用一个map可以查询文件的信息
+//用一个map 队列可以查询文件的信息
 var fileMetas map[string]*FileMeta
 
 func init() {
 	fileMetas = make(map[string]*FileMeta, 10000)
 }
 
-// UpdateFileMeta 更新文件
+// UpdateFileMeta 更新文件列表
 func UpdateFileMeta(fileMeta *FileMeta) {
 	//通过fileMeta.FileSha1作为key,每个文件为value
 	fileMetas[fileMeta.FileName] = fileMeta
@@ -36,7 +36,9 @@ func UpdateFileMeta(fileMeta *FileMeta) {
 	}
 	fileModer.CreateAt = time.Now()
 	fileModer.UpdateAt = time.Now()
-	persistentlayer.OnFileUploadFinished(fileModer)
+	if !OnFileUploadFinished(fileModer) {
+		log.Println("更新文件数据表错误")
+	}
 }
 
 //SelectFileMeta : 查询文件是否在队列中

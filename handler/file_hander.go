@@ -18,14 +18,14 @@ import (
 //UpFileLoaHandler 上传文件
 func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 	//判断请求是Get 请求 渲染 上传页面
-	if request.Method == "GET" {
-		data, err := ioutil.ReadFile("./static/view/index.html")
+	if request.Method == http.MethodGet {
+		data, err := ioutil.ReadFile("/static/view/index.html")
 		if err != nil {
 			io.WriteString(writer, "interNel server error")
 			return
 		}
 		io.WriteString(writer, string(data))
-	} else if request.Method == "POST" {
+	} else if request.Method == http.MethodPost {
 		file, head, err := request.FormFile("file")
 		if err != nil {
 			fmt.Printf("file to get data ,err %s\n", err.Error())
@@ -73,12 +73,12 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			UploadAt:   time.Now(),
 			LastUpdate: time.Now(),
 		}
+		//更新用户文件列表
 		if !meta.OnUserFileUploadFinished(tblUserFile) {
 			writer.Write([]byte("Upload Failed."))
 		} else {
 			http.Redirect(writer, request, "/static/view/home.html", http.StatusFound)
 		}
-
 	}
 }
 
@@ -162,7 +162,7 @@ func UpFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if request.Method != "POST" {
+	if request.Method != http.MethodPost {
 		writer.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

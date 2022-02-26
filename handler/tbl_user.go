@@ -18,7 +18,7 @@ func RegisterHandler(writer http.ResponseWriter, request *http.Request) {
 	tblUser.UserName = request.Form.Get("username")
 	tblUser.UserPwd = request.Form.Get("password")
 	if len(tblUser.UserName) < 3 || len(tblUser.UserPwd) < 5 {
-		writer.Write([]byte("lnvalid paramter"))
+		writer.Write([]byte("Invalid parameter"))
 		return
 	}
 	//查询用户是否存在
@@ -88,14 +88,33 @@ func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 	resp := util.RespMsg{
-		Code:  200,
-		Msg:   "登录成功",
-		Token: token,
-		Data:  nil,
+		Code: 0,
+		Msg:  "OK",
+		Data: struct {
+			Location string
+			Username string
+			Token    string
+		}{
+			Location: "http://" + request.Host + "/static/view/home.html",
+			Username: userName,
+			Token:    token,
+		},
 	}
 	writer.Write(resp.JsonByte())
 }
 
+// UserInfoHandler 获取用户信息
 func UserInfoHandler(writer http.ResponseWriter, request *http.Request) {
-
+	request.ParseForm()
+	userName := request.Form.Get("username")
+	tblUser := meta.GetUserToken(userName)
+	if tblUser != nil {
+		resp := util.RespMsg{
+			Code: 0,
+			Msg:  "ok",
+			Data: tblUser,
+		}
+		writer.Write(resp.JsonByte())
+	}
+	writer.WriteHeader(http.StatusForbidden)
 }

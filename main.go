@@ -23,7 +23,7 @@ func main() {
 
 	http.HandleFunc("/user/signup", handler.RegisterHandler)
 	http.HandleFunc("/user/login", handler.TblUserLoginHandle)
-	http.HandleFunc("/user/info", handler.UserInfoHandler)
+	http.HandleFunc("/user/info", handler.HttpInterceptor(handler.UserInfoHandler))
 	err := http.ListenAndServe(":8083", nil)
 	if err != nil {
 		fmt.Printf("Failed to start server ,err: %s", err.Error())

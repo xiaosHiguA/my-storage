@@ -26,6 +26,7 @@ func RegisterHandler(writer http.ResponseWriter, request *http.Request) {
 	if tblName == meta.UserNAMENULL {
 		if ok := meta.CreateUser(tblUser); ok {
 			writer.Write([]byte("用户注册成功"))
+			return
 		}
 	}
 	writer.Write([]byte("用户已存在"))
@@ -40,7 +41,7 @@ func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 	userName := request.Form.Get("username")
 	userPwd := request.Form.Get("password")
 	tblUser := meta.GetUser(userName)
-	if tblUser.UserName == "" {
+	if tblUser == nil {
 		resp := util.RespMsg{
 			Code: 500,
 			Msg:  "用户不存在",
@@ -65,19 +66,19 @@ func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 		UserName:  userName,
 		UserToken: token,
 	}
-	//查询token 表是否有此用户
 	userToken := meta.GetUserToken(userName)
-	if userToken.UserName == meta.UserNAMENULL {
+	if userToken.UserName == "" {
+		//保存用户token
 		if !meta.SaveToken(&tblUserFile) {
 			resp := util.RespMsg{
 				Code: 500,
-				Msg:  "密码错误",
+				Msg:  "服务器内部错误",
 			}
 			writer.Write(resp.JsonByte())
 			return
 		}
 	} else {
-		//保存用户token
+		//更新用户token
 		if !meta.UpdateToken(tblUserFile) {
 			resp := util.RespMsg{
 				Code: 500,
@@ -108,7 +109,7 @@ func UserInfoHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	userName := request.Form.Get("username")
 	tblUser := meta.GetUserToken(userName)
-	if tblUser != nil {
+	if tblUser.UserName != "" {
 		resp := util.RespMsg{
 			Code: 0,
 			Msg:  "ok",

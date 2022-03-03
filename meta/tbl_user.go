@@ -19,7 +19,7 @@ func CreateUser(user *model.TblUser) bool {
 	user.UserPwd = util.TblUserMD5(user.UserPwd)
 	user.SignupAt = time.Now()
 	user.LastActive = time.Now()
-	if err := db.Create(user).Error; err != nil {
+	if err := db.Model(&model.TblUser{}).Select("user_name", "user_pwd", "signup_at", "last_active").Create(user).Error; err != nil {
 		return false
 	}
 	return true
@@ -40,7 +40,7 @@ func GetTbUser(userName string) string {
 func GetUser(u string) *model.TblUser {
 	var tblUser = &model.TblUser{}
 	db := gormdb.GetDb()
-	if err := db.Take(tblUser, "user_name=?", u).Error; err != nil {
+	if err := db.Debug().Where("user_name= ?", u).First(&tblUser).Error; err != nil {
 		log.Println("select user err: ", err)
 		return nil
 	}
@@ -57,19 +57,19 @@ func UpdateToken(tblUserFile model.TblUserToken) bool {
 	return true
 }
 
-func GetUserToken(userName string) *model.TblUserToken {
+func GetUserToken(userName string) model.TblUserToken {
 	var userToken = model.TblUserToken{}
 	db := gormdb.GetDb()
-	if err := db.Where("user_name=?", userName).First(&userToken).Error; err != nil {
+	if err := db.Model(&model.TblUserToken{}).Where("user_name=?", userName).First(&userToken).Error; err != nil {
 		log.Println("get token err: ", err)
-		return nil
+		return userToken
 	}
-	return &userToken
+	return userToken
 }
 
 func SaveToken(tblUserFile *model.TblUserToken) bool {
 	db := gormdb.GetDb()
-	if err := db.Create(tblUserFile).Error; err != nil {
+	if err := db.Model(&model.TblUserToken{}).Create(tblUserFile).Error; err != nil {
 		log.Println("SaveToken token err: ", err)
 		return false
 	}

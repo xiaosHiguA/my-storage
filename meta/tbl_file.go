@@ -9,7 +9,7 @@ import (
 //OnFileUploadFinished 新增/更新文件元信息到mysql中
 func OnFileUploadFinished(file *model.TblFile) bool {
 	db := gormdb.GetDb()
-	result := db.Model(file).Create(file).Omit("ext_1", "ext_2")
+	result := db.Model(&model.TblFile{}).Create(file).Omit("ext_1", "ext_2")
 	if result.Error != nil {
 		log.Println("存储文件失败", result.Error.Error())
 		return false

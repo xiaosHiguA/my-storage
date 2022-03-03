@@ -12,15 +12,15 @@ func main() {
 	http.Handle("/static/",
 		http.StripPrefix("/static/",
 			http.FileServer(http.Dir("./static"))))
-
+	//文件存储模块
 	http.HandleFunc("/file/upload", handler.UpFileLoaHandler)
-	http.HandleFunc("/file/upload/suc", handler.UpLoadSucHandler)
 	http.HandleFunc("/file/meta", handler.GetFileMetaHandler)
-	http.HandleFunc("/file/query", handler.FileQueryHandler)
+	http.HandleFunc("/file/query", handler.HttpInterceptor(handler.FileQueryHandler))
 	http.HandleFunc("/file/downloadFile", handler.DownloadHandler)
 	http.HandleFunc("/file/upload/upFile", handler.UpFileMetaHandler)
 	http.HandleFunc("/file/delete", handler.RemoveListFileMetaHandler)
 
+	//用户模块
 	http.HandleFunc("/user/signup", handler.RegisterHandler)
 	http.HandleFunc("/user/login", handler.TblUserLoginHandle)
 	http.HandleFunc("/user/info", handler.HttpInterceptor(handler.UserInfoHandler))

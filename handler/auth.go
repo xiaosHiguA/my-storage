@@ -15,11 +15,11 @@ func HttpInterceptor(h http.HandlerFunc) http.HandlerFunc {
 			token := r.Form.Get("token")
 			//验证token
 			if len(username) < 3 || !IsTokenValid(token) {
-				resp := util.RespMsg{
-					Code: 500,
-					Msg:  "token 无效",
-					Data: nil,
-				}
+				resp := util.NewRespMsg(
+					int(util.StatusInvalidToken),
+					"token无效",
+					nil,
+				)
 				w.Write(resp.JsonByte())
 				return
 			}

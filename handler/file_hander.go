@@ -58,13 +58,30 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		//Seek将下一次在文件上读取或写入的偏移量设置为偏移量
-		//newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
+		newFile.Seek(0, 0) //光标默认在文件开头，设置光标的位置在：距离文件开头
 		//计算sha1值
 		fileMeta.FileShl = util.FileSha1(newFile)
 		//更新文件列表
-		meta.UpdateFileMeta(fileMeta)
+		if !meta.UpdateFileMeta(fileMeta) {
+			resp := util.RespMsg{
+				Code: 500,
+				Msg:  "更新失败",
+				Data: nil,
+			}
+			writer.Write(resp.JsonByte())
+			return
+		}
 		request.ParseForm()
 		username := request.Form.Get("username")
+		if len(username) == 0 {
+			resp := util.RespMsg{
+				Code: 500,
+				Msg:  "缺少用户名",
+				Data: nil,
+			}
+			writer.Write(resp.JsonByte())
+			return
+		}
 		var tblUserFile = &model.TblUserFile{
 			UserName:   username,
 			FileSha1:   fileMeta.FileShl,
@@ -101,19 +118,28 @@ func GetFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.Write(data)
 }
 
-// FileQueryHandler 获取文件列表
+// FileQueryHandler 查询批量的文件元信息
 func FileQueryHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	limit, err := strconv.Atoi(request.Form.Get("limit"))
+	userName := request.Form.Get("username")
 	if err != nil {
 		return
 	}
-	fileMeta := meta.GetFileMetaList(limit)
-	fileByte, err := json.Marshal(fileMeta)
+	userFiles, err := meta.QueryUserFileMetas(userName, limit)
+	if len(userFiles) == 0 && err != nil {
+		writer.WriteHeader(http.StatusForbidden)
+	}
+	data, err := json.Marshal(userFiles)
 	if err != nil {
 		return
 	}
-	writer.Write(fileByte)
+	resp := util.RespMsg{
+		Code: 200,
+		Msg:  "ok",
+		Data: data,
+	}
+	writer.Write(resp.JsonByte())
 }
 
 // RemoveListFileMetaHandler 删除文件

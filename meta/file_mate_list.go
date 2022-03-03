@@ -25,7 +25,7 @@ func init() {
 }
 
 // UpdateFileMeta 更新文件列表
-func UpdateFileMeta(fileMeta *FileMeta) {
+func UpdateFileMeta(fileMeta *FileMeta) bool {
 	//通过fileMeta.FileSha1作为key,每个文件为value
 	fileMetas[fileMeta.FileName] = fileMeta
 	var fileModer = &model.TblFile{
@@ -38,7 +38,9 @@ func UpdateFileMeta(fileMeta *FileMeta) {
 	fileModer.UpdateAt = time.Now()
 	if !OnFileUploadFinished(fileModer) {
 		log.Println("更新文件数据表错误")
+		return false
 	}
+	return true
 }
 
 //SelectFileMeta : 查询文件是否在队列中

@@ -108,7 +108,7 @@ func TblUserLoginHandle(writer http.ResponseWriter, request *http.Request) {
 func UserInfoHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	userName := request.Form.Get("username")
-	tblUser := meta.GetUserToken(userName)
+	tblUser := meta.GetUser(userName)
 	if tblUser.UserName != "" {
 		resp := util.RespMsg{
 			Code: 0,

@@ -1,14 +1,14 @@
 package handler
 
 import (
+	"MyStorage/meta"
 	"MyStorage/model"
 	"MyStorage/util"
-
-	"MyStorage/meta"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -90,18 +90,29 @@ func UpFileLoaHandler(writer http.ResponseWriter, request *http.Request) {
 			UploadAt:   time.Now(),
 			LastUpdate: time.Now(),
 		}
+		tblUer := meta.GetUserToken(username)
+		if tblUer.UserName == "" {
+			resp := util.RespMsg{
+				Code: 500,
+				Msg:  "用户不存在",
+				Data: nil,
+			}
+			writer.Write(resp.JsonByte())
+			return
+		}
 		//更新用户文件列表
 		if !meta.OnUserFileUploadFinished(tblUserFile) {
 			writer.Write([]byte("Upload Failed."))
 		} else {
 			http.Redirect(writer, request, "/static/view/home.html", http.StatusFound)
+			resp := util.RespMsg{
+				Code: 200,
+				Msg:  "ok",
+				Data: nil,
+			}
+			writer.Write(resp.JsonByte())
 		}
 	}
-}
-
-//UpLoadSucHandler 上传文件 保存到
-func UpLoadSucHandler(writer http.ResponseWriter, request *http.Request) {
-	io.WriteString(writer, "Upload finished")
 }
 
 // GetFileMetaHandler 获取单个文件元信息
@@ -109,8 +120,11 @@ func GetFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	fileHash := request.Form["filehash"][0]
 	//获取单条信息
-	tblFile := meta.GetFileData(fileHash)
-
+	tblFile, err := meta.GetFileData(fileHash)
+	if err != nil {
+		log.Println("获取信息 err： ", err)
+		return
+	}
 	data, err := json.Marshal(tblFile)
 	if err != nil {
 		return
@@ -129,15 +143,13 @@ func FileQueryHandler(writer http.ResponseWriter, request *http.Request) {
 	userFiles, err := meta.QueryUserFileMetas(userName, limit)
 	if len(userFiles) == 0 && err != nil {
 		writer.WriteHeader(http.StatusForbidden)
-	}
-	data, err := json.Marshal(userFiles)
-	if err != nil {
 		return
 	}
+
 	resp := util.RespMsg{
 		Code: 200,
 		Msg:  "ok",
-		Data: data,
+		Data: userFiles,
 	}
 	writer.Write(resp.JsonByte())
 }
@@ -184,6 +196,7 @@ func UpFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	opType := request.Form.Get("op")
 	fileHash1 := request.Form.Get("filehash")
 	fileName := request.Form.Get("filename")
+
 	if len(opType) == 0 {
 		return
 	}
@@ -199,6 +212,7 @@ func UpFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	fileMeta.FileName = fileName
 	//
 	meta.UpdateFileMeta(fileMeta)
@@ -210,4 +224,51 @@ func UpFileMetaHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(fileData)
+}
+
+// TryFastUploadHandler 秒传接口
+func TryFastUploadHandler(writer http.ResponseWriter, request *http.Request) {
+	//
+	request.ParseForm()
+	// 1. 解析请求参数
+	username := request.Form.Get("username")
+	fileHash := request.Form.Get("filehash")
+	filename := request.Form.Get("filename")
+	filesize, _ := strconv.Atoi(request.Form.Get("filesize"))
+
+	// 2. 从文件表中查询相同hash的文件记录
+	fileMeta, err := meta.GetFileData(fileHash)
+	if err != nil {
+		fmt.Println(err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	// 3. 查不到记录则返回秒传失败
+	if fileMeta.FileSha1 == "" {
+		resp := util.RespMsg{
+			Code: -1,
+			Msg:  "秒传失败，请访问普通上传接口",
+		}
+		writer.Write(resp.JsonByte())
+		return
+	}
+
+	var file = &model.TblUserFile{
+		UserName: username,
+		FileName: filename,
+		FileSize: int64(filesize),
+	}
+	if !meta.OnUserFileUploadFinished(file) {
+		resp := util.RespMsg{
+			Code: -1,
+			Msg:  "存储文件失败",
+		}
+		writer.Write(resp.JsonByte())
+		return
+	}
+	resp := util.RespMsg{
+		Code: 200,
+		Msg:  "ok",
+	}
+	writer.Write(resp.JsonByte())
 }

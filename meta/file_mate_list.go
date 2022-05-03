@@ -37,7 +37,7 @@ func UpdateFileMeta(fileMeta *FileMeta) bool {
 	fileModer.CreateAt = time.Now()
 	fileModer.UpdateAt = time.Now()
 	if !OnFileUploadFinished(fileModer) {
-		log.Println("更新文件数据表错误")
+		log.Println("更新文件表数据表错误")
 		return false
 	}
 	return true

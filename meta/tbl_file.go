@@ -18,18 +18,18 @@ func OnFileUploadFinished(file *model.TblFile) bool {
 }
 
 // GetFileData 取单个文件信息
-func GetFileData(fileHash string) *model.TblFile {
+func GetFileData(fileSha1 string) (*model.TblFile, error) {
 	var tblFile = &model.TblFile{}
 	db := gormdb.GetDb()
-	if rest := db.First(tblFile, "file_sha1=?", fileHash); rest.Error != nil {
+	if rest := db.Model(&model.TblFile{}).First(&tblFile, "file_sha1=?", fileSha1); rest.Error != nil {
 		log.Println("获取单个文件信息错误: ", rest.Error)
-		return nil
+		return nil, rest.Error
 	}
-	return tblFile
+	return tblFile, nil
 }
 
-func GetArticleList() []*model.TblFile {
-	tab := make([]*model.TblFile, 0)
+func OnUserFileUploadFile() *model.TblFile {
+	tab := &model.TblFile{}
 	db := gormdb.GetDb()
 	db.Where("")
 	return tab
